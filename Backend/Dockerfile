@@ -1,9 +1,5 @@
-# Base image
-FROM openjdk:18
-
-# Working directory
+FROM eclipse-temurin:17-jdk
 WORKDIR /app
-
-COPY target/ /app/
-
-CMD ["java", "-jar", "nova-bank-platform-api-0.0.1-SNAPSHOT.jar"]
+COPY target/*.jar app.jar
+EXPOSE 8070
+ENTRYPOINT ["java", "-jar", "app.jar"]
