@@ -5,7 +5,7 @@ import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
 import alertify from "alertifyjs";
-import axios from "axios";
+import apiClient from "../../apiClient";
 import { bindActionCreators } from "redux";
 import { connect } from "react-redux";
 import * as accountActions from "../../redux/actions/accountActions";
@@ -44,8 +44,7 @@ function AccountForm({ onSaveAccount, open = true, onClose, actions}) {
     console.log(accessToken);
 
     try {
-      const apiUrl = "http://127.0.0.1:8070/account/create_account";
-      const response = await axios.post(apiUrl, jsonData, {
+      const response = await apiClient.post("/account/create_account", jsonData, {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer: " + accessToken, // JSON verisi göndermek için content type ayarı

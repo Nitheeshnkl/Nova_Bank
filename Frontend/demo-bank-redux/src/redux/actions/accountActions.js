@@ -1,5 +1,5 @@
 import * as actionTypes from "./actionTypes";
-import axios from "axios";
+import apiClient from "../../apiClient";
 
 function getAccessToken() {
   try {
@@ -35,9 +35,8 @@ export function getAccounts() {
       return;
     }
 
-    const apiUrl = "http://127.0.0.1:8070/app/dashboard";
-    axios
-      .get(apiUrl, {
+    apiClient
+      .get("/app/dashboard", {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer: " + accessToken,
@@ -62,9 +61,8 @@ export function getTotalBalance(){
       return;
     }
 
-    const apiUrl = "http://127.0.0.1:8070/app/dashboard";
-    axios
-      .get(apiUrl, {
+    apiClient
+      .get("/app/dashboard", {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer: " + accessToken,
@@ -89,9 +87,8 @@ export function getTransactionHistory() {
       return;
     }
 
-    const apiUrl = "http://127.0.0.1:8070/app/transaction_history";
-    axios
-      .get(apiUrl, {
+    apiClient
+      .get("/app/transaction_history", {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer: " + accessToken,
@@ -105,6 +102,5 @@ export function getTransactionHistory() {
       });
   };
 }
-
 
 

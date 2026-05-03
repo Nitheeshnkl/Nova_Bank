@@ -5,7 +5,7 @@ import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
 import alertify from "alertifyjs";
-import axios from "axios";
+import apiClient from "../../apiClient";
 import { bindActionCreators } from "redux";
 import { connect } from "react-redux";
 import * as accountActions from "../../redux/actions/accountActions";
@@ -43,7 +43,7 @@ function AccountForm({
     }
 
     try {
-      const response = await axios.post(apiUrl, jsonData, {
+      const response = await apiClient.post(apiUrl, jsonData, {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer: " + accessToken, // JSON verisi göndermek için content type ayarı
@@ -103,7 +103,7 @@ function AccountForm({
     jsonData["account_id"] = currentAccount.account_id;
     jsonData["deposit_amount"] = amount;
 
-    const apiUrl = "http://127.0.0.1:8070/transact/deposit";
+    const apiUrl = "/transact/deposit";
 
     postRequestToApi(apiUrl, jsonData);
   };
@@ -120,7 +120,7 @@ function AccountForm({
     jsonData["account_id"] = currentAccount.account_id;
     jsonData["withdrawal_amount"] = amount;
 
-    const apiUrl = "http://127.0.0.1:8070/transact/withdraw";
+    const apiUrl = "/transact/withdraw";
 
     postRequestToApi(apiUrl, jsonData);
   };
@@ -138,7 +138,7 @@ function AccountForm({
     jsonData["targetAccount"] = targetAccount.trim();
     jsonData["amount"] = amount;
 
-    const apiUrl = "http://127.0.0.1:8070/transact/transfer";
+    const apiUrl = "/transact/transfer";
 
     postRequestToApi(apiUrl, jsonData);
   };
@@ -158,7 +158,7 @@ function AccountForm({
       account_id: String(currentAccount.account_id),
     };
 
-    const apiUrl = "http://127.0.0.1:8070/transact/payment";
+    const apiUrl = "/transact/payment";
 
     postRequestToApi(apiUrl, jsonData);
   };

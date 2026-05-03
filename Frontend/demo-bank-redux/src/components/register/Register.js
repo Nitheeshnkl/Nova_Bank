@@ -13,7 +13,7 @@ import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { NavLink, useNavigate } from "react-router-dom";
-import axios from "axios";
+import apiClient from "../../apiClient";
 import alertify from "alertifyjs";
 
 
@@ -66,9 +66,7 @@ export default function SignUp() {
     console.log(jsonData, { confirm_password: confirmPassword });
 
     try {
-      const apiUrl =
-        "http://127.0.0.1:8070/register?confirm_password=" + confirmPassword;
-      const response = await axios.post(apiUrl, jsonData, {
+      const response = await apiClient.post("/register?confirm_password=" + confirmPassword, jsonData, {
         headers: {
           "Content-Type": "application/json", // JSON verisi göndermek için content type ayarı
         },

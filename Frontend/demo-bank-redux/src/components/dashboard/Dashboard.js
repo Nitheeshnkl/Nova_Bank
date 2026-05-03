@@ -22,7 +22,7 @@ import { mainListItems, secondaryListItems } from "./listItems";
 import Chart from "./Chart";
 import TotalAccountBalance from "./TotalAccountBalance";
 import Accounts from "./Accounts";
-import axios from "axios";
+import apiClient from "../../apiClient";
 import Button from "@mui/material/Button";
 import alertify from "alertifyjs";
 import { useNavigate } from "react-router-dom";
@@ -131,8 +131,6 @@ export default function Dashboard({ page = "dashboard" }) {
     event.preventDefault();
 
     try {
-      const apiUrl = "http://127.0.0.1:8070/logout";
-
       //local stroge token
       const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
       const accessToken = userInfo?.access_token;
@@ -148,7 +146,7 @@ export default function Dashboard({ page = "dashboard" }) {
       };
       console.log(headers.Authorization);
 
-      const response = await axios.get(apiUrl, { headers });
+      const response = await apiClient.get("/logout", { headers });
 
       if (response.status === 200) {
         localStorage.clear();

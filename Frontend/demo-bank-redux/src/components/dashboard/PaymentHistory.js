@@ -6,7 +6,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import Title from "./Title";
-import axios from "axios";
+import apiClient from "../../apiClient";
 
 function getAccessToken() {
   try {
@@ -35,8 +35,8 @@ export default function PaymentHistory() {
       return;
     }
 
-    axios
-      .get("http://127.0.0.1:8070/app/payment_history", {
+    apiClient
+      .get("/app/payment_history", {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer: " + accessToken,
