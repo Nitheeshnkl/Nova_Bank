@@ -10,7 +10,7 @@ import com.novabank.models.User;
 import javax.transaction.Transactional;
 
 @Repository
-public interface UserRepository extends CrudRepository<User, Integer> {
+public interface UserRepository extends CrudRepository<User, String> {
 
     @Query(value="SELECT email FROM users WHERE email = :email", nativeQuery = true)
     String getUserEmail(@Param("email")String email);
@@ -25,10 +25,11 @@ public interface UserRepository extends CrudRepository<User, Integer> {
     User getUserDetails(@Param("email")String email);
 
     @Modifying
-    @Query(value = "INSERT INTO users (first_name, last_name, email, password, token, code) VALUES" +
-            "(:first_name, :last_name, :email, :password, :token, :code)",nativeQuery = true)
+    @Query(value = "INSERT INTO users (user_id, first_name, last_name, email, password, token, code) VALUES" +
+            "(:user_id, :first_name, :last_name, :email, :password, :token, :code)",nativeQuery = true)
     @Transactional
-    void registerUser(@Param("first_name")String first_name,
+    void registerUser(@Param("user_id")String user_id,
+                      @Param("first_name")String first_name,
                       @Param("last_name")String last_name,
                       @Param("email")String email,
                       @Param("password")String password,

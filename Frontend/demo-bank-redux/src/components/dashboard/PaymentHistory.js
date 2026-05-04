@@ -39,7 +39,7 @@ export default function PaymentHistory() {
       .get("/app/payment_history", {
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer: " + accessToken,
+          Authorization: "Bearer " + accessToken,
         },
       })
       .then((response) => setPayments(response.data?.payment_history || []))

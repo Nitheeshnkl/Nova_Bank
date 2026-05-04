@@ -7,11 +7,13 @@ import com.novabank.models.User;
 import com.novabank.repository.UserRepository;
 import com.novabank.service.RegisterService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.UUID;
 
 @Service
 public class RegisterServiceImpl implements RegisterService {
@@ -25,32 +27,37 @@ public class RegisterServiceImpl implements RegisterService {
         String email = user.getEmail();
         String password = user.getPassword();
 
-        //TODO: CHECK FOR PASSWORD MATCH:
         if(!password.equals(confirmPassword))
-            return ResponseEntity.badRequest().body("Şifreler uyuşmuyor.");
+            return ResponseEntity.badRequest().body("Passwords do not match.");
 
-        //TODO: GET TOKEN STRING:
+        if (email == null || email.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Email cannot be empty.");
+        }
+
+        String existingEmail = userRepository.getUserEmail(email.trim());
+        if (existingEmail != null) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already exists.");
+        }
+
+        String userId = UUID.randomUUID().toString();
         String token = Token.generateToken();
-
         int code = generateRandomCode();
-
-        //TODO: GET EMAIL HTML BODY
         String emailBody = HTML.htmlEmailTemplate(token, Integer.toString(code));
-
-        //TODO: HASH PASSWORD:
         String hashed_password = BCrypt.hashpw(password, BCrypt.gensalt());
 
-        //TODO: REGISTER USER:
-        userRepository.registerUser(firstName, lastName, email, hashed_password, token, Integer.toString(code));
+        try {
+            userRepository.registerUser(userId, firstName, lastName, email.trim(), hashed_password, token, Integer.toString(code));
+        } catch (Exception e) {
+            String message = e.getMessage() != null ? e.getMessage() : "Unable to register user.";
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Registration failed: " + message);
+        }
 
-        boolean emailSent = sendEmailNotification(email, emailBody);
+        boolean emailSent = sendEmailNotification(email.trim(), emailBody);
         if (!emailSent) {
-            // Local/dev fallback: keep auth flow usable when SMTP is not configured.
             userRepository.verifyAccount(token, Integer.toString(code));
         }
 
         Map<String, Object> response = createResponse(user, emailSent);
-
         return ResponseEntity.ok(response);
     }
 

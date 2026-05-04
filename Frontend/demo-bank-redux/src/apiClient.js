@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_URL + "/api",
+  baseURL: 'https://nova-bank-4ge0.onrender.com',
 });
 
 export default apiClient;

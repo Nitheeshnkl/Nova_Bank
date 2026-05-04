@@ -1,6 +1,5 @@
 package com.novabank.service.impl;
 
-import com.novabank.helpers.Token;
 import com.novabank.helpers.authorization.JwtService;
 import com.novabank.models.User;
 import com.novabank.repository.UserRepository;
@@ -54,7 +53,6 @@ public class AuthServiceImpl implements AuthService {
             User user = userRepository.getUserDetails(userEmailInDatabase);
             String jwt = jwtService.generateToken(user.getEmail());
 
-            // Token'i JSON yanıtının içine ekleyin
             Map<String, Object> responseBody = new HashMap<>();
             responseBody.put("message", "Authentication confirmed");
             responseBody.put("access_token", jwt);
@@ -64,6 +62,8 @@ public class AuthServiceImpl implements AuthService {
             session.setAttribute("authenticated", true);
 
             return ResponseEntity.ok(responseBody);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Something went wrong");
         }

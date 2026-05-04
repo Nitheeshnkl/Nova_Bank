@@ -2,11 +2,13 @@ package com.novabank.models;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.Table;
 import javax.validation.constraints.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "users")
 public class User {
     @Id
     private String user_id;

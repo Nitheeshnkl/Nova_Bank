@@ -47,7 +47,7 @@ function AccountForm({ onSaveAccount, open = true, onClose, actions}) {
       const response = await apiClient.post("/account/create_account", jsonData, {
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer: " + accessToken, // JSON verisi göndermek için content type ayarı
+          Authorization: "Bearer " + accessToken, // JSON verisi göndermek için content type ayarı
         },
       });
 
