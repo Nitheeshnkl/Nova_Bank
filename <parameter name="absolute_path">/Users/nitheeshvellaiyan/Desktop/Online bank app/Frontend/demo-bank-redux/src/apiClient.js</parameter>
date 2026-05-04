@@ -1,0 +1,8 @@
+<parameter name="content">import axios from "axios";
+
+const apiClient = axios.create({
+  baseURL: 'https://nova-bank-4ge0.onrender.com',
+});
+
+export default apiClient;
+</parameter>

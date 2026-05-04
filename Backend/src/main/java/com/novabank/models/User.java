@@ -1,8 +1,14 @@
 package com.novabank.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.validation.constraints.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -11,24 +17,52 @@ import java.time.LocalDateTime;
 @Table(name = "users")
 public class User {
     @Id
-    private String user_id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private Long id;
+
     @NotBlank(message = "The first name field cannot be empty.")
     @Size(min=3, message = "The first name field must be at least 3 characters.")
+    @Column(name = "first_name")
     private String first_name;
+
     @NotBlank(message = "The last name field cannot be empty.")
     @Size(min=3, message = "The last name field must be at least 3 characters.")
+    @Column(name = "last_name")
     private String  last_name;
+
     @Email
     @NotEmpty(message = "Email field cannot be empty.")
     @Pattern(regexp = "([a-zA-Z0-9]+(?:[._+-][a-zA-Z0-9]+)*)@([a-zA-Z0-9]+(?:[.-][a-zA-Z0-9]+)*[.][a-zA-Z]{2,})", message="Please enter a valid email.")
+    @Column(unique = true)
     private String  email;
 
-    public String getUser_id() {
-        return user_id;
+    @NotEmpty(message = "Password field cannot be empty.")
+    @NotNull
+    private String  password;
+    private String  token;
+    private String  code;
+    private int verified;
+    private LocalDate verified_at;
+    private LocalDateTime create_at;
+    private LocalDateTime updated_at;
+
+    public Long getId() {
+        return id;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    @Transient
+    public String getUser_id() {
+        return id == null ? null : id.toString();
+    }
+
+    @Transient
     public void setUser_id(String user_id) {
-        this.user_id = user_id;
+        // Compatibility setter for older clients. The database generates IDs.
     }
 
     public String getFirst_name() {
@@ -110,15 +144,5 @@ public class User {
     public void setUpdated_at(LocalDateTime updated_at) {
         this.updated_at = updated_at;
     }
-
-    @NotEmpty(message = "Password field cannot be empty.")
-    @NotNull
-    private String  password;
-    private String  token;
-    private String  code;
-    private int verified;
-    private LocalDate verified_at;
-    private LocalDateTime create_at;
-    private LocalDateTime updated_at;
 
 }

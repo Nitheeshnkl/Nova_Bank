@@ -7,13 +7,13 @@ import com.novabank.models.User;
 import com.novabank.repository.UserRepository;
 import com.novabank.service.RegisterService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.UUID;
 
 @Service
 public class RegisterServiceImpl implements RegisterService {
@@ -39,14 +39,23 @@ public class RegisterServiceImpl implements RegisterService {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already exists.");
         }
 
-        String userId = UUID.randomUUID().toString();
         String token = Token.generateToken();
         int code = generateRandomCode();
         String emailBody = HTML.htmlEmailTemplate(token, Integer.toString(code));
         String hashed_password = BCrypt.hashpw(password, BCrypt.gensalt());
 
+        user.setFirst_name(firstName);
+        user.setLast_name(lastName);
+        user.setEmail(email.trim());
+        user.setPassword(hashed_password);
+        user.setToken(token);
+        user.setCode(Integer.toString(code));
+
+        User savedUser;
         try {
-            userRepository.registerUser(userId, firstName, lastName, email.trim(), hashed_password, token, Integer.toString(code));
+            savedUser = userRepository.save(user);
+        } catch (DataIntegrityViolationException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already exists.");
         } catch (Exception e) {
             String message = e.getMessage() != null ? e.getMessage() : "Unable to register user.";
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Registration failed: " + message);
@@ -57,7 +66,7 @@ public class RegisterServiceImpl implements RegisterService {
             userRepository.verifyAccount(token, Integer.toString(code));
         }
 
-        Map<String, Object> response = createResponse(user, emailSent);
+        Map<String, Object> response = createResponse(savedUser, emailSent);
         return ResponseEntity.ok(response);
     }
 
