@@ -34,9 +34,12 @@ public class AppServiceImpl implements AppService {
     @Override
     public ResponseEntity<?> getDashboard(User user) {
         try {
-            int userId = Integer.parseInt(user.getUser_id());
+            Long userId = user.getId();
             List<Account> userAccounts = accountRepository.getUserAccountsById(userId);
             BigDecimal totalAccountsBalance = accountRepository.getTotalBalance(userId);
+            if (totalAccountsBalance == null) {
+                totalAccountsBalance = BigDecimal.ZERO;
+            }
 
             Map<String, Object> response = new HashMap<>();
             response.put("userAccounts", userAccounts);
@@ -51,7 +54,7 @@ public class AppServiceImpl implements AppService {
     @Override
     public ResponseEntity<?> getPaymentHistory(User user) {
         try {
-            int userId = Integer.parseInt(user.getUser_id());
+            Long userId = user.getId();
             List<PaymentHistory> userPaymentHistory = paymentHistoryRepository.getPaymentsRecordsById(userId);
 
             Map<String, List> response = new HashMap<>();
@@ -66,7 +69,7 @@ public class AppServiceImpl implements AppService {
     @Override
     public ResponseEntity<?> getTransactionHistory(User user) {
         try {
-            int userId = Integer.parseInt(user.getUser_id());
+            Long userId = user.getId();
             List<TransactionHistory> userTransactionHistory = transactHistoryRepository.getTransactionRecordsById(userId);
 
             Map<String, List> response = new HashMap<>();

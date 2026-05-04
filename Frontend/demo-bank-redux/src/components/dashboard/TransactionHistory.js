@@ -4,6 +4,7 @@ import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
 import Title from "./Title";
 import { useEffect, useState } from "react";
 import { connect } from "react-redux";
@@ -12,10 +13,40 @@ import { bindActionCreators } from "redux";
 import * as accountActions from "../../redux/actions/accountActions";
 
 function TransactionHistory(props) {
+  const { getTransactionHistory, transactHistory } = props;
   const [showAllAccounts, setShowAllAccounts] = useState(false);
-  useEffect(() => {}, [props.transactHistory]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadHistory() {
+      setIsLoading(true);
+      setError("");
+      try {
+        await getTransactionHistory();
+      } catch (error) {
+        if (mounted) {
+          setError("Transaction history is unavailable right now.");
+        }
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadHistory();
+    return () => {
+      mounted = false;
+    };
+  }, [getTransactionHistory]);
 
   function dateFormatter(dateArray) {
+    if (!Array.isArray(dateArray)) {
+      return "";
+    }
     const year = dateArray[0];
     const month = dateArray[1];
     const day = dateArray[2];
@@ -41,6 +72,8 @@ function TransactionHistory(props) {
   return (
     <React.Fragment>
       <Title>Accounts History</Title>
+      {isLoading ? <Typography>Loading transaction history...</Typography> : null}
+      {error ? <Typography color="error">{error}</Typography> : null}
       <Table size="small">
         <TableHead>
           <TableRow>
@@ -55,7 +88,8 @@ function TransactionHistory(props) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {props.transactHistory
+          {transactHistory
+            .slice()
             .sort((a, b) => b.transaction_id - a.transaction_id)
             .map((history) => (
               <TableRow key={history.transaction_id}>
@@ -69,6 +103,11 @@ function TransactionHistory(props) {
                 <TableCell>{dateFormatter(history.created_at)}</TableCell>
               </TableRow>
             ))}
+          {!isLoading && !transactHistory.length && !error ? (
+            <TableRow>
+              <TableCell colSpan={8}>No transaction history yet.</TableCell>
+            </TableRow>
+          ) : null}
         </TableBody>
       </Table>
       <Button onClick={() => setShowAllAccounts(!showAllAccounts)}>

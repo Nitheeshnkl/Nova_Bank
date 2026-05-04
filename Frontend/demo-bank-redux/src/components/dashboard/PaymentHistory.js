@@ -6,15 +6,10 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import Title from "./Title";
-import apiClient from "../../apiClient";
+import apiClient, { getStoredAccessToken } from "../../apiClient";
 
 function getAccessToken() {
-  try {
-    const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
-    return userInfo?.access_token || null;
-  } catch (error) {
-    return null;
-  }
+  return getStoredAccessToken();
 }
 
 function dateFormatter(dateArray) {
@@ -27,28 +22,44 @@ function dateFormatter(dateArray) {
 
 export default function PaymentHistory() {
   const [payments, setPayments] = React.useState([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState("");
 
   React.useEffect(() => {
-    const accessToken = getAccessToken();
-    if (!accessToken) {
-      return;
+    let mounted = true;
+
+    async function loadPayments() {
+      const accessToken = getAccessToken();
+      if (!accessToken) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await apiClient.get("/app/payment_history");
+        if (mounted) {
+          setPayments(response.data?.payment_history || []);
+        }
+      } catch (error) {
+        if (mounted) {
+          setError("Payment history is unavailable right now.");
+        }
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
     }
 
-    apiClient
-      .get("/app/payment_history", {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + accessToken,
-        },
-      })
-      .then((response) => setPayments(response.data?.payment_history || []))
-      .catch(() => setError("Payment history is unavailable right now."));
+    loadPayments();
+    return () => {
+      mounted = false;
+    };
   }, []);
-
   return (
     <React.Fragment>
       <Title>Payment History</Title>
+      {isLoading ? <Typography>Loading payment history...</Typography> : null}
       {error ? <Typography color="error">{error}</Typography> : null}
       <Table size="small">
         <TableHead>
@@ -76,7 +87,7 @@ export default function PaymentHistory() {
               <TableCell>{dateFormatter(payment.created_at)}</TableCell>
             </TableRow>
           ))}
-          {!payments.length && !error ? (
+          {!isLoading && !payments.length && !error ? (
             <TableRow>
               <TableCell colSpan={8}>No payment history yet.</TableCell>
             </TableRow>

@@ -9,22 +9,47 @@ import * as accountActions from "../../redux/actions/accountActions";
 import { Link as RouterLink } from "react-router-dom";
 
 function TotalAccountBalance(props) {
+  const { getTotalBalance, totalBalance } = props;
   const [currentDate, setCurrentDate] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    props.actions.getTotalBalance();
+    let mounted = true;
 
-    // Güncel tarih
+    async function loadBalance() {
+      setIsLoading(true);
+      setError("");
+      try {
+        await getTotalBalance();
+      } catch (error) {
+        if (mounted) {
+          setError("Balance is unavailable right now.");
+        }
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadBalance();
+
     const now = new Date();
     const formattedDate = `${now.getDate()} ${now.toLocaleString('default', { month: 'long' })}, ${now.getFullYear()}`;
     setCurrentDate(formattedDate);
-  }, [props.actions]);
+
+    return () => {
+      mounted = false;
+    };
+  }, [getTotalBalance]);
 
   return (
     <React.Fragment >
       <Title>Total Account Balance</Title>
+      {error ? <Typography color="error">{error}</Typography> : null}
       <Typography component="p" variant="h4">
-        {props.totalBalance}
+        {isLoading ? "Loading..." : totalBalance}
       </Typography>
       <Typography color="text.secondary" sx={{ flex: 1 }}>
         on {currentDate}
@@ -40,9 +65,7 @@ function TotalAccountBalance(props) {
 
 function mapDispatchToProps(dispatch) {
   return {
-    actions: {
-      getTotalBalance: bindActionCreators(accountActions.getTotalBalance, dispatch)
-    },
+    getTotalBalance: bindActionCreators(accountActions.getTotalBalance, dispatch),
   };
 }
 

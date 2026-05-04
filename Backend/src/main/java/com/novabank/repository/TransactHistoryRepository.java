@@ -12,7 +12,7 @@ import java.util.List;
 public interface TransactHistoryRepository extends CrudRepository<TransactionHistory, Integer> {
 
     @Query(value = "SELECT * FROM v_transaction_history WHERE user_id = :user_id ORDER BY transaction_id DESC",nativeQuery = true)
-    List<TransactionHistory> getTransactionRecordsById(@Param("user_id")int user_id);
+    List<TransactionHistory> getTransactionRecordsById(@Param("user_id")Long user_id);
 
     @Query(value = "SELECT * FROM v_transaction_history WHERE account_id = :account_id",nativeQuery = true)
     List<TransactionHistory> getTransactionRecordsByAccountId(@Param("account_id")int user_id);

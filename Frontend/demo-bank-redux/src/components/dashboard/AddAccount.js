@@ -5,7 +5,7 @@ import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
 import alertify from "alertifyjs";
-import apiClient from "../../apiClient";
+import apiClient, { getStoredAccessToken } from "../../apiClient";
 import { bindActionCreators } from "redux";
 import { connect } from "react-redux";
 import * as accountActions from "../../redux/actions/accountActions";
@@ -15,6 +15,7 @@ function AccountForm({ onSaveAccount, open = true, onClose, actions}) {
     accountName: "",
     accountType: "",
   });
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -27,8 +28,7 @@ function AccountForm({ onSaveAccount, open = true, onClose, actions}) {
   const handleSaveAccount = async (event) => {
     event.preventDefault();
 
-    const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
-    const accessToken = userInfo?.access_token;
+    const accessToken = getStoredAccessToken();
     if (!accessToken) {
       alertify.error("Your session expired. Please login again.");
       onClose();
@@ -43,26 +43,28 @@ function AccountForm({ onSaveAccount, open = true, onClose, actions}) {
     console.log(jsonData);
     console.log(accessToken);
 
+    setIsSaving(true);
     try {
       const response = await apiClient.post("/account/create_account", jsonData, {
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer " + accessToken, // JSON verisi göndermek için content type ayarı
         },
       });
 
       if (response.status === 200) {
         alertify.success("New account added.");
       }
-    } catch (error) {
-      // İstek başarısız olduğunda hata 
-      alertify.error("Something went wrong");
-    }
 
-    actions.getAccounts();
-    
-    onSaveAccount(accountInfo);
-    onClose(); // Yan menüyü kapat
+      await actions.getAccounts();
+      await actions.getTotalBalance();
+      onSaveAccount(accountInfo);
+      onClose();
+    } catch (error) {
+      const message = error?.response?.data || "Something went wrong";
+      alertify.error(typeof message === "string" ? message : "Something went wrong");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -122,9 +124,10 @@ function AccountForm({ onSaveAccount, open = true, onClose, actions}) {
             variant="contained"
             color="primary"
             onClick={handleSaveAccount}
+            disabled={isSaving}
             sx={{ backgroundColor: "#EB3D13" }}
           >
-            Create Account
+            {isSaving ? "Creating..." : "Create Account"}
           </Button>
         </Box>
       </div>
@@ -135,7 +138,8 @@ function AccountForm({ onSaveAccount, open = true, onClose, actions}) {
 function mapDispatchToProps(dispatch) {
   return {
     actions: {
-      getAccounts: bindActionCreators(accountActions.getAccounts, dispatch)
+      getAccounts: bindActionCreators(accountActions.getAccounts, dispatch),
+      getTotalBalance: bindActionCreators(accountActions.getTotalBalance, dispatch),
     },
   };
 }

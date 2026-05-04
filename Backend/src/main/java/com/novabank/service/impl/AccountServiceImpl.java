@@ -1,6 +1,7 @@
 package com.novabank.service.impl;
 
 import com.novabank.helpers.GenAccountNumber;
+import com.novabank.models.Account;
 import com.novabank.models.User;
 import com.novabank.repository.AccountRepository;
 import com.novabank.service.AccountService;
@@ -8,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @Service
@@ -31,9 +34,18 @@ public class AccountServiceImpl implements AccountService {
             int generatedAccountNumber = GenAccountNumber.generateAccountNumber();
             String bankAccountNumber = String.valueOf(generatedAccountNumber);
 
-            int userId = Integer.parseInt(user.getUser_id());
+            Long userId = user.getId();
 
-            accountRepository.createBankAccount(userId, bankAccountNumber, accountName, accountType);
+            Account account = new Account();
+            account.setUser_id(userId);
+            account.setAccount_number(bankAccountNumber);
+            account.setAccount_name(accountName);
+            account.setAccount_type(accountType);
+            account.setBalance(BigDecimal.ZERO);
+            account.setCreate_at(LocalDateTime.now());
+            account.setUpdated_at(LocalDateTime.now());
+
+            accountRepository.save(account);
 
             return ResponseEntity.ok(accountRepository.getUserAccountsById(userId));
         } catch (Exception e) {

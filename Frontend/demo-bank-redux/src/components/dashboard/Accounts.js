@@ -1,5 +1,6 @@
 import * as React from "react";
 import Link from "@mui/material/Link";
+import Typography from "@mui/material/Typography";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -18,18 +19,44 @@ function preventDefault(event) {
 }
 
 function Accounts(props) {
+  const { accounts, currentAccount, getAccounts, changeAccount } = props;
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const handleSaveAccount = (accountInfo) => {
     console.log("Yeni hesap bilgileri:", accountInfo);
   };
 
-
   useEffect(() => {
-    props.actions.getAccounts();
-  }, [props.actions]);
+    let mounted = true;
+
+    async function loadAccounts() {
+      setIsLoading(true);
+      setError("");
+      try {
+        await getAccounts();
+      } catch (error) {
+        if (mounted) {
+          setError("Accounts are unavailable right now.");
+        }
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadAccounts();
+    return () => {
+      mounted = false;
+    };
+  }, [getAccounts]);
 
   function dateFormatter(dateArray) {
+    if (!Array.isArray(dateArray)) {
+      return "";
+    }
     const year = dateArray[0];
     const month = dateArray[1];
     const day = dateArray[2];
@@ -39,7 +66,9 @@ function Accounts(props) {
 
   return (
     <React.Fragment>
-      <Title>Your Accounts {props.currentAccount.account_name}</Title>
+      <Title>Your Accounts {currentAccount.account_name}</Title>
+      {isLoading ? <Typography>Loading accounts...</Typography> : null}
+      {error ? <Typography color="error">{error}</Typography> : null}
       <Table size="small">
         <TableHead>
           <TableRow>
@@ -53,10 +82,10 @@ function Accounts(props) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {props.accounts.map((account) => (
+          {accounts.map((account) => (
             <TableRow
               onClick={() => {
-                props.actions.changeAccount(account);
+                changeAccount(account);
               }}
               key={account.account_id}
             >
@@ -73,7 +102,7 @@ function Accounts(props) {
                   color="primary"
                   onClick={(event) => {
                     event.stopPropagation();
-                    props.actions.changeAccount(account);
+                    changeAccount(account);
                     setIsFormOpen(true);
                   }}
                   sx={{ backgroundColor: "#F5BD52" }}
@@ -83,6 +112,11 @@ function Accounts(props) {
               </TableCell>
             </TableRow>
           ))}
+          {!isLoading && !accounts.length && !error ? (
+            <TableRow>
+              <TableCell colSpan={8}>No accounts yet.</TableCell>
+            </TableRow>
+          ) : null}
         </TableBody>
       </Table>
       <Transact
@@ -100,10 +134,8 @@ function Accounts(props) {
 
 function mapDispatchToProps(dispatch) {
   return {
-    actions: {
-      getAccounts: bindActionCreators(accountActions.getAccounts, dispatch),
-      changeAccount: bindActionCreators(accountActions.changeAccount, dispatch),
-    },
+    getAccounts: bindActionCreators(accountActions.getAccounts, dispatch),
+    changeAccount: bindActionCreators(accountActions.changeAccount, dispatch),
   };
 }
 

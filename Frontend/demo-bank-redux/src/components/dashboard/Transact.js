@@ -5,7 +5,7 @@ import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
 import alertify from "alertifyjs";
-import apiClient from "../../apiClient";
+import apiClient, { getStoredAccessToken } from "../../apiClient";
 import { bindActionCreators } from "redux";
 import { connect } from "react-redux";
 import * as accountActions from "../../redux/actions/accountActions";
@@ -32,30 +32,30 @@ function AccountForm({
     payment_amount: "",
     
   })
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const postRequestToApi = async (apiUrl, jsonData) => {
-    const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
-    const accessToken = userInfo?.access_token;
+    const accessToken = getStoredAccessToken();
     if (!accessToken) {
       alertify.error("Your session expired. Please login again.");
       onClose();
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const response = await apiClient.post(apiUrl, jsonData, {
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer " + accessToken, // JSON verisi göndermek için content type ayarı
         },
       });
 
       if (response.status === 200) {
         alertify.success(response.data?.message || "Transaction successful.");
       }
-      actions.getAccounts();
-      actions.getTotalBalance();
-      actions.getTransactionHistory()
+      await actions.getAccounts();
+      await actions.getTotalBalance();
+      await actions.getTransactionHistory()
       onSaveAccount(accountInfo);
       onClose();
       return true;
@@ -63,6 +63,8 @@ function AccountForm({
       const message = error?.response?.data || "Something went wrong";
       alertify.error(typeof message === "string" ? message : "Something went wrong");
       return false;
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -105,10 +107,10 @@ function AccountForm({
 
     const apiUrl = "/transact/deposit";
 
-    postRequestToApi(apiUrl, jsonData);
+    await postRequestToApi(apiUrl, jsonData);
   };
 
-  const handleWithdrawMoney = (event) => {
+  const handleWithdrawMoney = async (event) => {
     event.preventDefault();
     if (!currentAccount?.account_id) {
       alertify.error("Please select an account first.");
@@ -122,10 +124,10 @@ function AccountForm({
 
     const apiUrl = "/transact/withdraw";
 
-    postRequestToApi(apiUrl, jsonData);
+    await postRequestToApi(apiUrl, jsonData);
   };
 
-  const handleTransferMoney = (event) => {
+  const handleTransferMoney = async (event) => {
     event.preventDefault();
     if (!currentAccount?.account_id) {
       alertify.error("Please select an account first.");
@@ -140,10 +142,10 @@ function AccountForm({
 
     const apiUrl = "/transact/transfer";
 
-    postRequestToApi(apiUrl, jsonData);
+    await postRequestToApi(apiUrl, jsonData);
   };
 
-  const handlePaymentTransaction = (event) => {
+  const handlePaymentTransaction = async (event) => {
     event.preventDefault();
     if (!currentAccount?.account_id) {
       alertify.error("Please select an account first.");
@@ -160,7 +162,7 @@ function AccountForm({
 
     const apiUrl = "/transact/payment";
 
-    postRequestToApi(apiUrl, jsonData);
+    await postRequestToApi(apiUrl, jsonData);
   };
 
   return (
@@ -242,8 +244,9 @@ function AccountForm({
               color="primary"
               sx={{ backgroundColor: "#F5BD52" }}
               onClick={handleDepositMoney}
+              disabled={isSubmitting}
             >
-              Transact
+              {isSubmitting ? "Processing..." : "Transact"}
             </Button>
 
             <img src="card.jpg" alt="Deposit" style={{ marginTop: '100px', maxWidth: '100%', height: 'auto' }} />
@@ -302,8 +305,9 @@ function AccountForm({
               color="primary"
               sx={{ backgroundColor: "#F5BD52" }}
               onClick={handleTransferMoney}
+              disabled={isSubmitting}
             >
-              Transact
+              {isSubmitting ? "Processing..." : "Transact"}
             </Button>
             <img src="transact.jpg" alt="Deposit" style={{ marginTop: '100px', maxWidth: '100%', height: 'auto' }} />
           </>
@@ -347,8 +351,9 @@ function AccountForm({
               color="primary"
               sx={{ backgroundColor: "#F5BD52" }}
               onClick={handleWithdrawMoney}
+              disabled={isSubmitting}
             >
-              Transact
+              {isSubmitting ? "Processing..." : "Transact"}
             </Button>
 
             <img src="transact.jpg" alt="Deposit" style={{ marginTop: '100px', maxWidth: '100%', height: 'auto' }} />
@@ -434,8 +439,9 @@ function AccountForm({
             color="primary"
             sx={{ backgroundColor: "#F5BD52" }}
             onClick={handlePaymentTransaction}
+            disabled={isSubmitting}
           >
-            Transact
+            {isSubmitting ? "Processing..." : "Transact"}
           </Button>
             <img src="payment.jpg" alt="Deposit" style={{ marginTop: '100px', maxWidth: '100%', height: 'auto' }} />
           </>

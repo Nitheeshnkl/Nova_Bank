@@ -2,14 +2,10 @@ import Login from "../login/Login";
 import Register from "../register/Register";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Dashboard from "../dashboard/Dashboard"
+import { getStoredAccessToken } from "../../apiClient";
 
 function hasValidSession() {
-  try {
-    const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
-    return Boolean(userInfo?.access_token);
-  } catch (error) {
-    return false;
-  }
+  return Boolean(getStoredAccessToken());
 }
 
 function App() {

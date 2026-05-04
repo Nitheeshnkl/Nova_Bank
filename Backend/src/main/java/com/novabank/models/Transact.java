@@ -1,12 +1,17 @@
 package com.novabank.models;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Table;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "transaction_history")
 public class Transact {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int transaction_id;
     private int account_id;
     private String transaction_type;

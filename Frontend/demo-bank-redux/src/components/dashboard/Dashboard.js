@@ -22,7 +22,7 @@ import { mainListItems, secondaryListItems } from "./listItems";
 import Chart from "./Chart";
 import TotalAccountBalance from "./TotalAccountBalance";
 import Accounts from "./Accounts";
-import apiClient from "../../apiClient";
+import apiClient, { getStoredAccessToken } from "../../apiClient";
 import Button from "@mui/material/Button";
 import alertify from "alertifyjs";
 import { useNavigate } from "react-router-dom";
@@ -109,18 +109,22 @@ const placeholderText = {
 
 export default function Dashboard({ page = "dashboard" }) {
   const [open, setOpen] = React.useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = React.useState(true);
   const navigate = useNavigate();
 
   React.useEffect(() => {
     try {
-      const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
-      if (!userInfo?.access_token) {
+      if (!getStoredAccessToken()) {
         navigate("/");
+        return;
       }
     } catch (error) {
       localStorage.removeItem("userInfo");
       navigate("/");
+      return;
     }
+
+    setIsCheckingAuth(false);
   }, [navigate]);
 
   const toggleDrawer = () => {
@@ -132,8 +136,7 @@ export default function Dashboard({ page = "dashboard" }) {
 
     try {
       //local stroge token
-      const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
-      const accessToken = userInfo?.access_token;
+      const accessToken = getStoredAccessToken();
       if (!accessToken) {
         localStorage.clear();
         navigate("/");
@@ -141,12 +144,7 @@ export default function Dashboard({ page = "dashboard" }) {
       }
 
       //header object
-      const headers = {
-        Authorization: `Bearer ${accessToken}`,
-      };
-      console.log(headers.Authorization);
-
-      const response = await apiClient.get("/logout", { headers });
+      const response = await apiClient.get("/logout");
 
       if (response.status === 200) {
         localStorage.clear();
@@ -256,6 +254,10 @@ export default function Dashboard({ page = "dashboard" }) {
       </Typography>
     </Paper>
   );
+
+  if (isCheckingAuth) {
+    return null;
+  }
 
   return (
     <ThemeProvider theme={defaultTheme}>

@@ -1,7 +1,9 @@
 package com.novabank.service.impl;
 
 import com.novabank.models.Account;
+import com.novabank.models.Payment;
 import com.novabank.models.PaymentRequest;
+import com.novabank.models.Transact;
 import com.novabank.models.TransferRequest;
 import com.novabank.models.User;
 import com.novabank.repository.AccountRepository;
@@ -40,7 +42,7 @@ public class TransactServiceImpl implements TransactService {
             validateLoggedInUser(user);
             validateDepositRequest(requestMap);
 
-            int userId = Integer.parseInt(user.getUser_id());
+            Long userId = user.getId();
             Account account = resolveUserAccount(userId, requestMap.get("account_id"));
             int accountId = account.getAccount_id();
             double depositAmount = Double.parseDouble(requestMap.get("deposit_amount"));
@@ -50,7 +52,7 @@ public class TransactServiceImpl implements TransactService {
 
             accountRepository.changeAccountsBalanceById(newBalance, accountId);
 
-            transactRepository.logTransaction(accountId, "deposit", depositAmount, "online", "success", "Deposit Transaction Successful", LocalDateTime.now());
+            logTransaction(accountId, "deposit", depositAmount, "online", "success", "Deposit Transaction Successful");
 
             return ResponseEntity.ok(buildDepositResponse(userId));
 
@@ -65,7 +67,7 @@ public class TransactServiceImpl implements TransactService {
             validateLoggedInUser(user);
             validatePaymentRequest(request);
 
-            int userId = Integer.parseInt(user.getUser_id());
+            Long userId = user.getId();
             Account sourceAccount = resolveUserAccount(userId, request.getAccount_id());
             int accountId = sourceAccount.getAccount_id();
             double paymentAmount = Double.parseDouble(request.getPayment_amount());
@@ -80,18 +82,18 @@ public class TransactServiceImpl implements TransactService {
             double newBalance = currentBalance - paymentAmount;
             accountRepository.changeAccountsBalanceById(newBalance, accountId);
 
-            paymentRepository.makePayment(
-                    accountId,
-                    request.getBeneficiary(),
-                    request.getAccount_number(),
-                    paymentAmount,
-                    request.getReference(),
-                    "success",
-                    "Payment Transaction Successful",
-                    LocalDateTime.now()
-            );
+            Payment payment = new Payment();
+            payment.setAccount_id(accountId);
+            payment.setBeneficiary(request.getBeneficiary());
+            payment.setBeneficiary_acc_no(request.getAccount_number());
+            payment.setAmount(paymentAmount);
+            payment.setReference_no(request.getReference());
+            payment.setStatus("success");
+            payment.setReason_code("Payment Transaction Successful");
+            payment.setCreated_at(LocalDateTime.now());
+            paymentRepository.save(payment);
 
-            transactRepository.logTransaction(accountId, "Payment", paymentAmount, "online", "success", "Payment Transaction Successful", LocalDateTime.now());
+            logTransaction(accountId, "Payment", paymentAmount, "online", "success", "Payment Transaction Successful");
 
             return ResponseEntity.ok(buildPaymentResponse(userId));
 
@@ -106,7 +108,7 @@ public class TransactServiceImpl implements TransactService {
             validateLoggedInUser(user);
             validateWithdrawalRequest(requestMap);
 
-            int userId = Integer.parseInt(user.getUser_id());
+            Long userId = user.getId();
             Account account = resolveUserAccount(userId, requestMap.get("account_id"));
             int accountId = account.getAccount_id();
             double withdrawalAmount = Double.parseDouble(requestMap.get("withdrawal_amount"));
@@ -121,7 +123,7 @@ public class TransactServiceImpl implements TransactService {
             double newBalance = currentBalance - withdrawalAmount;
             accountRepository.changeAccountsBalanceById(newBalance, accountId);
 
-            transactRepository.logTransaction(accountId, "Withdrawal", withdrawalAmount, "online", "success", "Withdrawal Transaction Successful", LocalDateTime.now());
+            logTransaction(accountId, "Withdrawal", withdrawalAmount, "online", "success", "Withdrawal Transaction Successful");
 
             return ResponseEntity.ok(buildWithdrawalResponse(userId));
 
@@ -136,7 +138,7 @@ public class TransactServiceImpl implements TransactService {
             validateLoggedInUser(user);
             validateTransferRequest(request);
 
-            int userId = Integer.parseInt(user.getUser_id());
+            Long userId = user.getId();
             Account sourceAccount = resolveUserAccount(userId, request.getSourceAccount());
             Account targetAccount = resolveAccount(request.getTargetAccount());
             int sourceAccountId = sourceAccount.getAccount_id();
@@ -161,7 +163,7 @@ public class TransactServiceImpl implements TransactService {
             accountRepository.changeAccountsBalanceById(newSourceBalance, sourceAccountId);
             accountRepository.changeAccountsBalanceById(newTargetBalance, targetAccountId);
 
-            transactRepository.logTransaction(sourceAccountId, "Transfer", transferAmount, "online", "success", "Transfer Transaction Successful", LocalDateTime.now());
+            logTransaction(sourceAccountId, "Transfer", transferAmount, "online", "success", "Transfer Transaction Successful");
 
             return ResponseEntity.ok(buildTransferResponse(userId));
 
@@ -238,7 +240,7 @@ public class TransactServiceImpl implements TransactService {
 
 
     private void handleInsufficientFunds(int accountId) {
-        transactRepository.logTransaction(accountId, "withdrawal", 0.0, "online", "failed", "Insufficient funds.", LocalDateTime.now());
+        logTransaction(accountId, "withdrawal", 0.0, "online", "failed", "Insufficient funds.");
     }
 
     private void validateLoggedInUser(User user) {
@@ -247,7 +249,7 @@ public class TransactServiceImpl implements TransactService {
         }
     }
 
-    private Account resolveUserAccount(int userId, String accountIdentifier) {
+    private Account resolveUserAccount(Long userId, String accountIdentifier) {
         String normalizedIdentifier = normalizeAccountIdentifier(accountIdentifier);
         Account account = accountRepository.getUserAccountByIdOrNumber(userId, parseAccountId(normalizedIdentifier), normalizedIdentifier);
         if (account == null) {
@@ -288,28 +290,40 @@ public class TransactServiceImpl implements TransactService {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Transaction failed. Please try again.");
     }
 
-    private Map<String, Object> buildDepositResponse(int userId) {
+    private void logTransaction(int accountId, String type, double amount, String source, String status, String reasonCode) {
+        Transact transact = new Transact();
+        transact.setAccount_id(accountId);
+        transact.setTransaction_type(type);
+        transact.setAmount(amount);
+        transact.setSource(source);
+        transact.setStatus(status);
+        transact.setReason_code(reasonCode);
+        transact.setCreated_at(LocalDateTime.now());
+        transactRepository.save(transact);
+    }
+
+    private Map<String, Object> buildDepositResponse(Long userId) {
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Amount Deposited Successfully.");
         response.put("accounts", accountRepository.getUserAccountsById(userId));
         return response;
     }
 
-    private Map<String, Object> buildPaymentResponse(int userId) {
+    private Map<String, Object> buildPaymentResponse(Long userId) {
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Payment Processed Successfully!");
         response.put("accounts", accountRepository.getUserAccountsById(userId));
         return response;
     }
 
-    private Map<String, Object> buildWithdrawalResponse(int userId) {
+    private Map<String, Object> buildWithdrawalResponse(Long userId) {
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Withdrawal Successful!");
         response.put("accounts", accountRepository.getUserAccountsById(userId));
         return response;
     }
 
-    private Map<String, Object> buildTransferResponse(int userId) {
+    private Map<String, Object> buildTransferResponse(Long userId) {
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Transfer Completed Successfully.");
         response.put("accounts", accountRepository.getUserAccountsById(userId));

@@ -13,7 +13,7 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import Typography from "@mui/material/Typography";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { NavLink ,useNavigate} from "react-router-dom";
-import apiClient from "../../apiClient";
+import apiClient, { getStoredAccessToken } from "../../apiClient";
 import alertify from "alertifyjs";
 
 function Copyright(props) {
@@ -42,13 +42,8 @@ export default function SignInSide() {
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    try {
-      const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
-      if (userInfo?.access_token) {
-        navigate("/dashboard");
-      }
-    } catch (error) {
-      localStorage.removeItem("userInfo");
+    if (getStoredAccessToken()) {
+      navigate("/dashboard");
     }
   }, [navigate]);
 
