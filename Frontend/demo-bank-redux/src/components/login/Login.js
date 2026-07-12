@@ -12,8 +12,8 @@ import Grid from "@mui/material/Grid";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import Typography from "@mui/material/Typography";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { NavLink ,useNavigate} from "react-router-dom";
-import apiClient, { getStoredAccessToken } from "../../apiClient";
+import { NavLink } from "react-router-dom";
+import apiClient from "../../apiClient";
 import alertify from "alertifyjs";
 
 function Copyright(props) {
@@ -39,7 +39,7 @@ function Copyright(props) {
 const defaultTheme = createTheme();
 
 export default function SignInSide() {
-  const navigate = useNavigate();
+
 
   
 
