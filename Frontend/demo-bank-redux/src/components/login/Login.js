@@ -41,11 +41,7 @@ const defaultTheme = createTheme();
 export default function SignInSide() {
   const navigate = useNavigate();
 
-  React.useEffect(() => {
-    if (getStoredAccessToken()) {
-      navigate("/dashboard");
-    }
-  }, [navigate]);
+  
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -67,9 +63,12 @@ export default function SignInSide() {
       localStorage.setItem('userInfo', JSON.stringify(response.data));
 
       if (response.status === 200) {
-        alertify.success("Login successful.");
-        navigate('/dashboard')
-      }
+  localStorage.setItem("userInfo", JSON.stringify(response.data));
+
+  alertify.success("Login successful.");
+
+  window.location.replace("/dashboard");
+}
 
       console.log("Kullanıcı başarıyla giris yapti:", response.data);
     } catch (error) {
